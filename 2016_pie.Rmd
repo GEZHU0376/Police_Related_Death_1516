@@ -1,0 +1,201 @@
+---
+title: "Analysis of Police Related Death From 2015 to 2016"
+author: "G.Zhu"
+date: "6/3/2020"
+output
+  rmarkdown::github_document
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown Introduction
+
+To better understand the topics of police related death in the US. We collected the datasets from kaggle (data science/ML training and file exchange website) to analyze the detail statistics of police related death between the year of 2015 and 2016. All analysis are subjective to the data we received from Kaggle. Each visualization and analysis will be accompanied by short descriptions.
+
+1. Read in 2015 and 2016 police related death data files. Data files are stored in .csv format and no modification were made when downloaded from Kaggle. 
+```{r}
+infile_2015 <- read.csv('/Users/gezhu/Desktop/police_brutality_analytics/datasets_617_1199_2015.csv')
+infile_2016 <- read.csv('/Users/gezhu/Desktop/police_brutality_analytics/datasets_617_1199_2016.csv')
+```
+
+## Victim profile - Average age of the victim
+We would like to know the average, range, and standard deviation of the victim's age between 2015 and 2016. In order to understand the in depth information about the victim age, we have to eliminate the rows with 'unknown' age data. 
+
+1. Mean (Average of 2015 victim age) = 37.12073 
+```{r}
+library("stringr")
+age_2015 <- infile_2015[,3]
+clean_2015 <- str_remove(age_2015, "Unknown")
+num_2015 <- as.numeric(clean_2015)
+filtered_2015 <- na.omit(num_2015)
+mean_2015 <- mean(filtered_2015)
+mean_2015
+```
+
+2. Range (Youngest to oldest victim of 2015)
+Oldest victim: 87 years old
+Youngest victim: 6 years old
+Range: (6 - 87)
+```{r}
+min_2015 <- min(filtered_2015)
+max_2015 <- max(filtered_2015)
+range_2015 <- range(filtered_2015)
+range_2015
+```
+
+3. Standard Deviation
+Standard deviation of 2015 victim age = 13.25565
+```{r}
+sd_2015 <- sd(filtered_2015)
+sd_2015
+```
+
+4. Repeat the above protocols for 2016 data
+Average age of 2016 victim: 36.72071
+Range of the age: Youngest 10 and oldest 87
+Standard deviation of 2016 age: 13.00465
+```{r}
+library("stringr")
+age_2016 <- infile_2016[,3]
+clean_2016 <- str_remove(age_2016, "Unknown")
+num_2016 <- as.numeric(clean_2016)
+filtered_2016 <- na.omit(num_2016)
+mean_2016 <- mean(filtered_2016)
+
+range_2016 <- range(filtered_2016)
+
+sd_2016 <- sd(filtered_2016)
+
+mean_2016
+range_2016
+sd_2016
+```
+
+5. Visualization of Victim Age
+The barplot shows the frequency of 2015 victim age. Majority of the victims are in their mid 20s to mid 30s.
+```{r}
+library(MASS)
+dataViz = infile_2015$age
+dataViz.freq = table(dataViz)
+barplot(dataViz.freq)
+```
+## Victim Demographics
+Now we can analyze the demographics of the victim from 2015 and 2016 police brutality data. 
+1. Basic demographics breakdown
+```{r}
+race_data_15 <- infile_2015[,5]
+race_data_16 <- infile_2016[,5]
+table(race_data_15)
+table(race_data_16)
+race_df_15 <- as.data.frame(table(race_data_15))
+race_df_16 <- as.data.frame(table(race_data_16))
+
+```
+
+2. Visualization of demographics
+The piechart shows the demographics data of police brutality victims between the year of 2015 and 2016.
+- 2015 demographics pie chart
+```{r}
+library(ggplot2)
+bp_15<- ggplot(race_df_15, aes(x="", y=Freq, fill=race_data_15))+
+geom_bar(width = 1, stat = "identity")
+pie_2015 <- bp_15 + coord_polar("y", start=0)
+pie_15 <- pie + scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9", "#7a425c", "#61137d", "#cf4240", "#c8cf40", "#e6f1f2"))
+pie_15
+```
+- 2016 demographics pie chart
+```{r}
+bp_16 <- ggplot(race_df_16, aes(x="", y=Freq, fill=race_data_16))+
+geom_bar(width = 1, stat = "identity")
+pie_2016 <- bp_16 + coord_polar("y", start=0)
+pie_16 <- pie + scale_fill_manual(values=c("#999999", "#E69F00", "#56B4E9", "#7a425c", "#61137d", "#cf4240", "#c8cf40", "#e6f1f2"))
+pie_16
+```
+3. Gender of the victims
+2015 victim gender data
+```{r}
+gender_data_2015 <- infile_2015[,4]
+gender_df_2015 <- as.data.frame(table(gender_data_2015))
+gender_df_2015
+```
+
+2016 victim gender data
+```{r}
+gender_data_2016 <- infile_2016[,4]
+gender_df_2016 <- as.data.frame(table(gender_data_2016))
+gender_df_2016
+```
+
+## Location of the incidents
+Now we can start to look into the location of the incidents. 
+-Incidents location data from 2015
+```{r}
+location_2015 <- infile_2015[,12]
+state_data_2015 <- as.data.frame(table(location_2015))
+top5_state_2015 <- as.data.frame(head(state_data_2015[order(-state_data_2015$Freq),],5))
+top5_state_2015 
+```
+-Incidents data from 2016
+We select the top five states with highest police shooting incidents for visualizations.
+```{r}
+location_2016 <- infile_2016[,12]
+state_data_2016 <- as.data.frame(table(location_2016))
+top5_state_2016 <- as.data.frame(head(state_data_2016[order(-state_data_2016$Freq),],5))
+top5_state_2016 
+```
+* Which police department has the highest number of police shooting?
+We can count the incident frequency by going through the data from both 2015 and 2016. We display the top ten highest fatality in police shooting incidents here. 
+```{r}
+pd_2015 <- infile_2015[,16]
+pd_data_2015 <- as.data.frame(table(pd_2015))
+top10_2015 <- as.data.frame(head(pd_data_2015[order(-pd_data_2015$Freq),],10))
+top10_2015
+```
+
+2016 data:
+```{r}
+pd_2016 <- infile_2016[,16]
+pd_data_2016 <- as.data.frame(table(pd_2016))
+top10_2016 <- as.data.frame(head(pd_data_2016[order(-pd_data_2016$Freq),],10))
+top10_2016
+```
+
+Visualization of the top ten shooting incident police department
+2015:
+```{r}
+library(ggplot2)
+bp_pd_2015<- ggplot(top10_2015, aes(x="", y=Freq, fill=pd_2015))+
+geom_bar(width = 1, stat = "identity")
+bp_pd_2015
+```
+2016:
+```{r}
+library(ggplot2)
+bp_pd_2016<- ggplot(top10_2016, aes(x="", y=Freq, fill=pd_2016))+
+geom_bar(width = 1, stat = "identity")
+bp_pd_2016
+```
+
+
+In summary:
+
+The basic data are listed below. Detailed demographics and incidents locations data are attached next to the visualizations above. 
+
+-2015 Data 
+Mean age = 37.12073 
+
+Range of the age: Youngest 6 and oldest 87
+
+Standard deviation of 2015 victim age = 13.25565
+
+-2016 Data
+Mean age = 36.72071
+
+Range of the age: Youngest 10 and oldest 87
+
+Standard deviation of 2016 victim age = 13.00465
+
